@@ -1,0 +1,70 @@
+# ============================================================
+# AI Learning Copilot — ignore rules
+# 核心原则：学生原始数据与凭证永不进入仓库（AGENTS.md R23 / R24）
+# ============================================================
+
+# ---------- Python ----------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# ---------- 凭证与本地配置 (R24) ----------
+.env
+.env.*
+*.key
+*.pem
+*.p12
+credentials*
+credentials/**
+*_token*
+secrets*
+config/local.json
+opencode.local.json
+
+# ---------- 学生数据 (R23) ----------
+# 该目录只在本地存在，任何内容都不得提交
+student-data/**
+!student-data/README.md
+
+# ---------- 原始作业素材 ----------
+# 含姓名/笔迹的作业照片、扫描、录音属于学生数据，禁止入库。
+# test-data/ 只允许"已转录为文本的合成数据"或"已脱敏数据"。
+test-data/raw/**
+test-data/**/*.[jJ][pP][gG]
+test-data/**/*.[jJ][pP][eE][gG]
+test-data/**/*.[pP][nN][gG]
+test-data/**/*.[wW][eE][bB][pP]
+test-data/**/*.[hH][eE][iI][cC]
+test-data/**/*.[tT][iI][fF]
+test-data/**/*.[tT][iI][fF][fF]
+test-data/**/*.[pP][dD][fF]
+test-data/**/*.[mM][pP]3
+test-data/**/*.[mM]4[aA]
+test-data/**/*.[wW][aA][vV]
+
+# ---------- Benchmark 产物 ----------
+# gold_output 必须入库；model_output 原始响应体量大且可能含真实输入，默认不入库
+benchmark/runs/**/artifacts/
+benchmark/**/model_outputs/
+benchmark/**/*.log
+*.log
+
+# ---------- 编辑器 / OS ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- OpenCode 本地状态 ----------
+.opencode/
