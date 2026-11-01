@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.learning-assistance/schemas/learning-plan.schema.json",
+  "title": "Learning Plan Output",
+  "description": "learning-plan 的输出契约。本 Schema 刻意不包含任何答案字段：答案与解析存于独立 answer_key 文件（R19），因此\"把计划直接展示给学生\"在结构上就不可能泄露答案。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "skill_name",
+    "prompt_version",
+    "generated_at",
+    "student_id",
+    "confidence",
+    "confidence_basis",
+    "grade",
+    "plan_id",
+    "based_on",
+    "constraints",
+    "focus_knowledge_points",
+    "days",
+    "success_criteria",
+    "answer_key_ref",
+    "parent_notes"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "common.defs.json#/$defs/semantic_version" },
+    "skill_name": { "const": "learning-plan" },
+    "prompt_version": { "$ref": "common.defs.json#/$defs/prompt_version" },
+    "generated_at": { "$ref": "common.defs.json#/$defs/date_time" },
+    "student_id": { "$ref": "common.defs.json#/$defs/student_id" },
+    "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+    "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" },
+    "grade": { "type": "string", "pattern": "^g[0-9]{2}$" },
+    "plan_id": { "$ref": "common.defs.json#/$defs/plan_id" },
+
+    "based_on": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["diagnosis_generated_at", "diagnosis_knowledge_point_ids"],
+      "properties": {
+        "diagnosis_generated_at": { "$ref": "common.defs.json#/$defs/date_time" },
+        "diagnosis_knowledge_point_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" }
+        },
+        "diagnosis_age_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "超过 14 天应重新诊断（skill-contracts.md Q2 处置）"
+        },
+        "evidence_seq_to": { "type": "integer", "minimum": 0 }
+      }
+    },
+
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["days_count", "available_minutes_per_day"],
+      "properties": {
+        "days_count": { "type": "integer", "minimum": 1, "maximum": 14 },
+        "available_minutes_per_day": { "type": "integer", "minimum": 5, "maximum": 300 },
+        "exam_scope": { "type": ["string", "null"], "maxLength": 300 },
+        "max_focus_points_per_day": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "prior_rule": { "enum": ["prerequisite_first", "exam_scope_first", "evidence_scarcity_first"] }
+      }
+    },
+
+    "focus_knowledge_points": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["knowledge_point_id", "reason", "priority"],
+        "properties": {
+          "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+          "reason": { "type": "string", "minLength": 5, "maxLength": 400 },
+          "priority": { "type": "integer", "minimum": 1, "maximum": 8 },
+          "source_status": { "$ref": "common.defs.json#/$defs/mastery_status" },
+          "prerequisite_chain": {
+            "type": "array",
+            "maxItems": 10,
+            "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" }
+          }
+        }
+      }
+    },
+
+    "days": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 14,
+      "items": { "$ref": "#/$defs/plan_day" }
+    },
+
+    "practice_bank": {
+      "type": "array",
+      "maxItems": 60,
+      "items": { "$ref": "#/$defs/practice_item" },
+      "description": "题目正文集中存放处；activities[].question_ids 引用此处的 question_id。此处只放题干，不放答案（R19）"
+    },
+
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["knowledge_point_id", "criterion", "how_to_measure"],
+        "properties": {
+          "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+          "criterion": { "type": "string", "minLength": 5, "maxLength": 300 },
+          "how_to_measure": { "type": "string", "minLength": 5, "maxLength": 300 },
+          "requires_independent": { "type": "boolean" }
+        }
+      }
+    },
+
+    "answer_key_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "must_not_load_before_attempt"],
+      "properties": {
+        "relative_path": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 300,
+          "pattern": "^.*answer_key.*$",
+          "description": "指向独立的 answer_key 文件；路径必须含 answer_key，便于主 Agent 做加载隔离"
+        },
+        "must_not_load_before_attempt": { "const": true },
+        "question_count": { "type": "integer", "minimum": 0 }
+      },
+      "description": "R19 的结构化落点：计划文件本身无答案，答案在另一文件"
+    },
+
+    "parent_notes": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "type": "string", "minLength": 5, "maxLength": 400 },
+      "description": "给家长的说明。禁止能力/性格标签（R20）：不得出现\"粗心\"\"天赋\"\"不认真\"等表述"
+    },
+    "plan_limitations": {
+      "type": ["string", "null"],
+      "maxLength": 1000,
+      "description": "例如：无考试范围故按前置优先；诊断已过期；题库覆盖不足"
+    }
+  },
+
+  "$defs": {
+    "plan_day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day_index", "focus_knowledge_point_ids", "activities", "exit_ticket", "planned_minutes"],
+      "properties": {
+        "day_index": { "type": "integer", "minimum": 1, "maximum": 14 },
+        "date_hint": { "type": ["string", "null"], "maxLength": 40 },
+        "focus_knowledge_point_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+          "description": "每天原则上不超过两个重点知识点"
+        },
+        "planned_minutes": { "type": "integer", "minimum": 5, "maximum": 300 },
+        "activities": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/activity" }
+        },
+        "exit_ticket": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["question_id", "knowledge_point_id", "purpose"],
+          "properties": {
+            "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+            "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+            "purpose": { "type": "string", "minLength": 5, "maxLength": 300 }
+          }
+        }
+      }
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["activity_id", "type", "knowledge_point_id", "description", "minutes"],
+      "properties": {
+        "activity_id": { "$ref": "common.defs.json#/$defs/identifier" },
+        "type": {
+          "enum": [
+            "review_previous",
+            "new_concept",
+            "worked_example",
+            "basic_practice",
+            "variation_practice",
+            "transfer_practice",
+            "self_explanation",
+            "independent_verification",
+            "diagnostic_probe"
+          ],
+          "description": "对应六类学习策略 + 复习 + 验证性探测（diagnostic_probe 专门处理 unknown，不占重点名额）"
+        },
+        "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+        "question_ids": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "common.defs.json#/$defs/question_id" }
+        },
+        "description": { "type": "string", "minLength": 5, "maxLength": 600 },
+        "minutes": { "type": "integer", "minimum": 1, "maximum": 120 },
+        "strategy": {
+          "enum": ["retrieval", "spaced", "interleaving", "self_explanation", "worked_example", "transfer", "none"],
+          "description": "标注该活动依据的学习科学策略，便于复盘计划为何有效/无效"
+        }
+      }
+    },
+    "practice_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["question_id", "knowledge_point_id", "kind", "prompt", "verification_status"],
+      "properties": {
+        "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+        "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+        "kind": { "$ref": "common.defs.json#/$defs/question_kind" },
+        "prompt": { "type": "string", "minLength": 2, "maxLength": 1500 },
+        "estimated_minutes": { "type": ["integer", "null"], "minimum": 1, "maximum": 30 },
+        "difficulty": { "enum": ["foundational", "standard", "extended"] },
+        "verification_status": { "$ref": "common.defs.json#/$defs/verification_status" },
+        "verification_reason": { "type": ["string", "null"], "maxLength": 400 },
+        "is_original_homework_item": { "type": "boolean", "description": "避免直接重复原题" }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "learning-plan",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T20:30:00+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": null,
+      "confidence_basis": "计划质量不自评置信度；其依据见 based_on.diagnosis_generated_at",
+      "grade": "g07",
+      "plan_id": "plan_20261101_001",
+      "based_on": {
+        "diagnosis_generated_at": "2026-11-01T20:10:00+08:00",
+        "diagnosis_knowledge_point_ids": ["g7.math.a04.02.04", "g7.math.a02.03.01"],
+        "diagnosis_age_days": 0,
+        "evidence_seq_to": 3
+      },
+      "constraints": {
+        "days_count": 3,
+        "available_minutes_per_day": 30,
+        "exam_scope": null,
+        "max_focus_points_per_day": 2,
+        "prior_rule": "prerequisite_first"
+      },
+      "focus_knowledge_points": [
+        {
+          "knowledge_point_id": "g7.math.a04.02.04",
+          "reason": "本次作业出现去括号漏变号，且尚无独立验证证据",
+          "priority": 1,
+          "source_status": "developing",
+          "prerequisite_chain": ["g7.math.a04.02.02", "g7.math.a01.02.03"]
+        },
+        {
+          "knowledge_point_id": "g7.math.a02.03.01",
+          "reason": "从未测量，属 unknown，需先探测再决定是否排入学习",
+          "priority": 2,
+          "source_status": "unknown",
+          "prerequisite_chain": ["g7.math.a02.02.01"]
+        }
+      ],
+      "days": [
+        {
+          "day_index": 1,
+          "date_hint": "今日",
+          "focus_knowledge_point_ids": ["g7.math.a04.02.04"],
+          "planned_minutes": 28,
+          "activities": [
+            {
+              "activity_id": "d1a1",
+              "type": "review_previous",
+              "knowledge_point_id": "g7.math.a04.02.02",
+              "description": "口头复述同类项判定与合并法则，各举一个例子",
+              "minutes": 5,
+              "strategy": "retrieval"
+            },
+            {
+              "activity_id": "d1a2",
+              "type": "worked_example",
+              "knowledge_point_id": "g7.math.a04.02.04",
+              "description": "看一道完整去括号例题，重点标注括号内每一项如何变号",
+              "minutes": 6,
+              "strategy": "worked_example"
+            },
+            {
+              "activity_id": "d1a3",
+              "type": "basic_practice",
+              "knowledge_point_id": "g7.math.a04.02.04",
+              "question_ids": ["d1_q01", "d1_q02"],
+              "description": "两个一次式的去括号，括号内仅两项",
+              "minutes": 8,
+              "strategy": "none"
+            },
+            {
+              "activity_id": "d1a4",
+              "type": "self_explanation",
+              "knowledge_point_id": "g7.math.a04.02.04",
+              "question_ids": ["d1_q01"],
+              "description": "就 d1_q01 说明括号前是负号时每一项符号如何变化",
+              "minutes": 5,
+              "strategy": "self_explanation"
+            },
+            {
+              "activity_id": "d1a5",
+              "type": "diagnostic_probe",
+              "knowledge_point_id": "g7.math.a02.03.01",
+              "question_ids": ["d1_probe_1"],
+              "description": "对比 (-2)^4 与 -2^4，探测乘方符号约定（不占重点名额）",
+              "minutes": 4,
+              "strategy": "retrieval"
+            }
+          ],
+          "exit_ticket": {
+            "question_id": "d1_exit",
+            "knowledge_point_id": "g7.math.a04.02.04",
+            "purpose": "检查是否能在无提示下逐项变号"
+          }
+        }
+      ],
+      "success_criteria": [
+        {
+          "knowledge_point_id": "g7.math.a04.02.04",
+          "criterion": "两道不同结构的去括号题均正确且无需提示",
+          "how_to_measure": "exit ticket + Day 3 变式题，记录 hint_level",
+          "requires_independent": true
+        },
+        {
+          "knowledge_point_id": "g7.math.a02.03.01",
+          "criterion": "能说出 (-2)^4 与 -2^4 的底数差异并算对两者",
+          "how_to_measure": "d1_probe_1 的作答与口头解释",
+          "requires_independent": true
+        }
+      ],
+      "answer_key_ref": {
+        "relative_path": "student-data/stu_7a1f/plans/plan_20261101_001.answer_key.json",
+        "must_not_load_before_attempt": true,
+        "question_count": 4
+      },
+      "parent_notes": [
+        "本周重点在去括号的符号处理，练习量控制在每天 30 分钟内",
+        "乘方符号约定还没测过，先做一道探测题再决定是否需要专项练习"
+      ],
+      "plan_limitations": "无考试范围，按前置知识优先排序；诊断证据仅 1 条，Day 2 后应复评"
+    }
+  ]
+}

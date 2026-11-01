@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.learning-assistance/schemas/homework-analysis.schema.json",
+  "title": "Homework Analysis Output",
+  "description": "homework-analysis Skill 的输出契约。事实(observations)与推断(hypotheses)分离（R10）；verification_status 由确定性脚本给出，不由模型给出（R21）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "skill_name",
+    "prompt_version",
+    "generated_at",
+    "student_id",
+    "confidence",
+    "confidence_basis",
+    "grade",
+    "subject",
+    "homework_id",
+    "input",
+    "questions",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "common.defs.json#/$defs/semantic_version" },
+    "skill_name": { "const": "homework-analysis" },
+    "prompt_version": { "$ref": "common.defs.json#/$defs/prompt_version" },
+    "generated_at": { "$ref": "common.defs.json#/$defs/date_time" },
+    "student_id": { "$ref": "common.defs.json#/$defs/student_id" },
+    "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+    "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" },
+
+    "grade": {
+      "type": "string",
+      "pattern": "^g[0-9]{2}$",
+      "description": "语言无关的年级码，g07 = 七年级"
+    },
+    "subject": {
+      "enum": ["math"],
+      "description": "PoC 只覆盖数学；扩展学科需改本枚举并记 ADR"
+    },
+    "homework_id": { "$ref": "common.defs.json#/$defs/homework_id" },
+
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modality", "completion_setting"],
+      "properties": {
+        "modality": { "enum": ["image", "text"] },
+        "source_ref": {
+          "type": ["string", "null"],
+          "maxLength": 300,
+          "description": "本地 L0 素材的相对引用或转录文本的存放路径，不得是可公开访问的原始照片 URL（ADR-0005）"
+        },
+        "curriculum_version": { "type": ["string", "null"], "maxLength": 64 },
+        "textbook_version": { "type": ["string", "null"], "maxLength": 64 },
+        "completion_setting": { "$ref": "common.defs.json#/$defs/completion_setting" },
+        "ocr": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["engine", "mean_confidence", "uncertain_regions"],
+          "properties": {
+            "engine": { "type": "string", "maxLength": 64 },
+            "mean_confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+            "uncertain_regions": {
+              "type": "array",
+              "maxItems": 50,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["question_id", "reason"],
+                "properties": {
+                  "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+                  "region": { "type": "string", "maxLength": 120 },
+                  "reason": { "type": "string", "minLength": 3, "maxLength": 300 }
+                }
+              },
+              "description": "不确定的 OCR 区域。禁止静默修正（R11）：此处登记后必须体现在对应题目的 transcription_confidence 上"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "modality": { "const": "image" } }, "required": ["modality"] },
+          "then": { "required": ["ocr"], "properties": { "ocr": { "type": "object" } } },
+          "description": "image 输入必须携带 ocr 元数据；text 输入应为 null"
+        }
+      ]
+    },
+
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/question" }
+    },
+
+    "summary": { "$ref": "#/$defs/summary" }
+  },
+
+  "$defs": {
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "question_id",
+        "order",
+        "transcription",
+        "transcription_confidence",
+        "student_answer",
+        "student_work",
+        "reference_answer",
+        "reference_solution",
+        "result",
+        "verification_status",
+        "knowledge_point_ids",
+        "knowledge_mapping_status",
+        "observations",
+        "hypotheses",
+        "confidence",
+        "confidence_basis"
+      ],
+      "properties": {
+        "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+        "order": { "type": "integer", "minimum": 1 },
+        "transcription": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "description": "保留原始数学符号（正负号、分数、括号、指数、根号、等号、不等号）"
+        },
+        "transcription_confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "与结论 confidence 分开记录；<0.7 必须进入人工确认队列"
+        },
+        "math_expressions": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["raw", "uncertain"],
+            "properties": {
+              "raw": { "type": "string", "minLength": 1, "maxLength": 500 },
+              "normalized": {
+                "type": ["string", "null"],
+                "maxLength": 500,
+                "description": "白名单文法可解析的形式；无法确定时为 null，禁止猜测（R11）"
+              },
+              "uncertain": { "type": "boolean" },
+              "uncertain_reason": { "type": ["string", "null"], "maxLength": 300 }
+            }
+          }
+        },
+        "student_answer": {
+          "type": ["string", "null"],
+          "maxLength": 2000,
+          "description": "null 表示未作答，与\"读不出\"用 answer_legibility 区分"
+        },
+        "answer_legibility": { "enum": ["legible", "partially_legible", "illegible", "not_answered"] },
+        "student_work": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "$ref": "#/$defs/work_step" },
+          "description": "步骤级记录。不得仅凭最终答案判断理解情况"
+        },
+        "reference_answer": {
+          "type": ["string", "null"],
+          "maxLength": 2000,
+          "description": "独立求解得到；无法求解时为 null 且 verification_status 必须是 needs_human_check"
+        },
+        "reference_solution": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "$ref": "#/$defs/solution_step" }
+        },
+        "result": { "$ref": "common.defs.json#/$defs/error_type" },
+        "error_type_detail": {
+          "type": ["string", "null"],
+          "maxLength": 400,
+          "description": "对分类的补充说明，但不得引入表外分类（R8）"
+        },
+        "first_incorrect_step": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "指向 student_work[].step_no；null 表示无步骤级错误或未提供过程"
+        },
+        "question_kind": { "$ref": "common.defs.json#/$defs/question_kind" },
+        "verification_status": { "$ref": "common.defs.json#/$defs/verification_status" },
+        "verification_reason": {
+          "type": ["string", "null"],
+          "maxLength": 400,
+          "description": "降级时必须写明原因，例如 symbolic_numeric_disagreement / out_of_whitelist_grammar"
+        },
+        "knowledge_point_ids": {
+          "type": "array",
+          "maxItems": 6,
+          "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+          "description": "只能来自知识库（R14）；无匹配时留空并在 knowledge_mapping_status 标 unmapped"
+        },
+        "knowledge_mapping_status": { "$ref": "common.defs.json#/$defs/knowledge_mapping_status" },
+        "unmapped_description": {
+          "type": ["string", "null"],
+          "maxLength": 300,
+          "description": "unmapped 时说明这是什么内容，供人工补知识库；禁止借此新增知识点 ID（R13）"
+        },
+        "observations": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "common.defs.json#/$defs/observation" }
+        },
+        "hypotheses": {
+          "type": "array",
+          "maxItems": 10,
+          "items": { "$ref": "common.defs.json#/$defs/hypothesis" }
+        },
+        "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+        "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "knowledge_mapping_status": { "enum": ["unmapped", "partial"] } }, "required": ["knowledge_mapping_status"] },
+          "then": { "required": ["unmapped_description"], "properties": { "unmapped_description": { "type": "string", "minLength": 3 } } },
+          "description": "标 unmapped/partial 必须说明内容，否则无法驱动知识库补齐"
+        },
+        {
+          "if": { "properties": { "verification_status": { "const": "needs_human_check" } }, "required": ["verification_status"] },
+          "then": { "required": ["verification_reason"], "properties": { "verification_reason": { "type": "string", "minLength": 3 } } },
+          "description": "降级必须可解释（R25）"
+        },
+        {
+          "if": { "properties": { "result": { "enum": ["calculation_error", "concept_error", "method_error"] } }, "required": ["result"] },
+          "then": {
+            "properties": { "hypotheses": { "minItems": 1 } },
+            "required": ["first_incorrect_step"]
+          },
+          "description": "判定为某类错误时，必须给出首个错误步骤，且根因以 hypothesis 形式记录（R12）"
+        }
+      ]
+    },
+    "work_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_no", "content", "verdict"],
+      "properties": {
+        "step_no": { "type": "integer", "minimum": 1 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "verdict": { "enum": ["correct", "incorrect", "unstated", "unreadable"] },
+        "verdict_note": { "type": ["string", "null"], "maxLength": 300 }
+      }
+    },
+    "solution_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step_no", "content"],
+      "properties": {
+        "step_no": { "type": "integer", "minimum": 1 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "rule_applied": { "type": ["string", "null"], "maxLength": 200 }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_questions",
+        "by_result",
+        "by_verification_status",
+        "needs_human_check_question_ids",
+        "unmapped_question_ids"
+      ],
+      "properties": {
+        "total_questions": { "type": "integer", "minimum": 1 },
+        "by_result": {
+          "type": "object",
+          "propertyNames": { "$ref": "common.defs.json#/$defs/error_type" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "by_verification_status": {
+          "type": "object",
+          "propertyNames": { "$ref": "common.defs.json#/$defs/verification_status" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "needs_human_check_question_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "common.defs.json#/$defs/question_id" }
+        },
+        "unmapped_question_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "common.defs.json#/$defs/question_id" }
+        },
+        "notes": { "type": ["string", "null"], "maxLength": 1000 }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "homework-analysis",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T19:42:07+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": 0.82,
+      "confidence_basis": "表达式清晰可读，符号验算通过；步骤完整性由模型判断",
+      "grade": "g07",
+      "subject": "math",
+      "homework_id": "hw_20261101_001",
+      "input": {
+        "modality": "text",
+        "source_ref": "test-data/homework-analysis/synthetic/case_004.json",
+        "curriculum_version": "2022",
+        "textbook_version": "人教版2024秋版 七年级上（待实体书核对）",
+        "completion_setting": "home_unsupervised",
+        "ocr": null
+      },
+      "questions": [
+        {
+          "question_id": "q001",
+          "order": 1,
+          "transcription": "化简：-(2x-3)+x",
+          "transcription_confidence": 0.97,
+          "math_expressions": [
+            { "raw": "-(2x-3)+x", "normalized": "-(2*x-3)+x", "uncertain": false, "uncertain_reason": null },
+            { "raw": "-x-3", "normalized": "-x-3", "uncertain": false, "uncertain_reason": null }
+          ],
+          "student_answer": "-x-3",
+          "answer_legibility": "legible",
+          "student_work": [
+            { "step_no": 1, "content": "= -2x-3+x", "verdict": "incorrect", "verdict_note": "去括号时常数项 -3 未变号为 +3" },
+            { "step_no": 2, "content": "= -x-3", "verdict": "correct", "verdict_note": "在第一步结果基础上合并同类项正确" }
+          ],
+          "reference_answer": "-x+3",
+          "reference_solution": [
+            { "step_no": 1, "content": "= -2x+3+x", "rule_applied": "括号前为负号，括号内每一项变号" },
+            { "step_no": 2, "content": "= -x+3", "rule_applied": "合并同类项" }
+          ],
+          "result": "method_error",
+          "error_type_detail": "错误发生在去括号步骤，后续合并同类项在其错误结果上执行正确",
+          "first_incorrect_step": 1,
+          "question_kind": "unknown",
+          "verification_status": "program_verified",
+          "verification_reason": null,
+          "knowledge_point_ids": ["g7.math.a04.02.04", "g7.math.a04.02.02"],
+          "knowledge_mapping_status": "mapped",
+          "unmapped_description": null,
+          "observations": [
+            "第 1 步将 -(2x-3) 展开为 -2x-3，常数项符号未改变",
+            "第 2 步在其第 1 步结果上合并同类项，运算本身正确"
+          ],
+          "hypotheses": [
+            {
+              "statement": "可能是去括号法则中\"负号需逐项分配\"未建立，而非合并同类项存在问题",
+              "needs_verification": true,
+              "verification_question_id": "q001_probe_1",
+              "alternative_explanations": ["书写时的瞬时疏漏", "把 - 当作只作用于首项"]
+            }
+          ],
+          "confidence": 0.78,
+          "confidence_basis": "步骤级判定与符号验算一致；根因需新题验证"
+        }
+      ],
+      "summary": {
+        "total_questions": 1,
+        "by_result": { "method_error": 1 },
+        "by_verification_status": { "program_verified": 1 },
+        "needs_human_check_question_ids": [],
+        "unmapped_question_ids": [],
+        "notes": null
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "homework-analysis",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T20:05:00+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": null,
+      "confidence_basis": "转录不确定，不给出结论级置信度（禁止取中间值充数）",
+      "grade": "g07",
+      "subject": "math",
+      "homework_id": "hw_20261101_002",
+      "input": {
+        "modality": "image",
+        "source_ref": null,
+        "curriculum_version": "2022",
+        "textbook_version": "人教版2024秋版 七年级上（待实体书核对）",
+        "completion_setting": "unknown",
+        "ocr": {
+          "engine": "unspecified-spike",
+          "mean_confidence": 0.61,
+          "uncertain_regions": [
+            { "question_id": "q001", "region": "指数位置", "reason": "手写上标模糊，无法区分 2 与 3" }
+          ]
+        }
+      },
+      "questions": [
+        {
+          "question_id": "q001",
+          "order": 1,
+          "transcription": "计算：(-2)^?",
+          "transcription_confidence": 0.45,
+          "math_expressions": [
+            { "raw": "(-2)^?", "normalized": null, "uncertain": true, "uncertain_reason": "指数不可辨认，禁止猜测补全（R11）" }
+          ],
+          "student_answer": null,
+          "answer_legibility": "illegible",
+          "student_work": [],
+          "reference_answer": null,
+          "reference_solution": [],
+          "result": "unreadable",
+          "error_type_detail": null,
+          "first_incorrect_step": null,
+          "question_kind": "unknown",
+          "verification_status": "needs_human_check",
+          "verification_reason": "题干转录不确定，无法独立求解",
+          "knowledge_point_ids": [],
+          "knowledge_mapping_status": "unmapped",
+          "unmapped_description": "疑似有理数乘方练习，但指数不可辨，无法确认所考知识点",
+          "observations": ["图像第 2 行上标位置模糊", "学生作答区有笔迹但无法辨认为数字"],
+          "hypotheses": [],
+          "confidence": null,
+          "confidence_basis": "转录置信低于 0.7，仅登记事实，不给结论"
+        }
+      ],
+      "summary": {
+        "total_questions": 1,
+        "by_result": { "unreadable": 1 },
+        "by_verification_status": { "needs_human_check": 1 },
+        "needs_human_check_question_ids": ["q001"],
+        "unmapped_question_ids": ["q001"],
+        "notes": "本例为 OCR spike 的降级路径样本：主 Agent 必须暂停并请求确认，不得继续下游诊断"
+      }
+    }
+  ]
+}

@@ -22,7 +22,12 @@
 |---|---|---|---|---|
 | `sympy` | 1.14.0 | 符号数学验证（ADR-0002） | **运行时** | ✅ Accepted |
 | `jsonschema` | 4.26.0 | Draft 2020-12 Schema 校验（R7 / Layer 2） | 运行时（校验路径） | ⏳ Proposed，待批 |
+| `referencing` | 0.37.0 | 跨文件 `$ref` 解析（本仓库**直接 import**，非仅隐式传递） | 运行时（校验路径） | ⏳ Proposed，待批 |
 | `pytest` | 9.2.0 | Layer 1 单元测试（ADR-0004） | 仅开发 | ⏳ Proposed，待批 |
+
+> `referencing` 必须单独登记的原因：它虽随 `jsonschema` 安装，但本仓库代码直接依赖其 API
+> （`Registry` / `Resource.from_contents`）。若不锁版本，`jsonschema` 升级即可能悄悄破坏
+> Schema 校验链路（`validate_schemas.py` 会因此 SKIP，属于会被察觉的失败，但不应依赖运气）。
 
 环境：Python 3.14.0，项目本地 venv `.venv/`（不入库）。
 **不使用其它项目的全局/共享 venv** —— 本机默认 `python` 曾指向

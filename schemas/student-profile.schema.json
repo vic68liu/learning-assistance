@@ -1,0 +1,311 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.learning-assistance/schemas/student-profile.schema.json",
+  "title": "Student Profile (Knowledge Diagnosis Output)",
+  "description": "knowledge-diagnosis 的输出契约。每个结论必须能追溯到 evidence_ids（R22）；无证据即为 unknown，禁止当作 needs_support（R16）；单次错误不得判定永久未掌握（R15）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "skill_name",
+    "prompt_version",
+    "generated_at",
+    "student_id",
+    "confidence",
+    "confidence_basis",
+    "grade",
+    "based_on",
+    "knowledge_points",
+    "profile_notes"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "common.defs.json#/$defs/semantic_version" },
+    "skill_name": { "const": "knowledge-diagnosis" },
+    "prompt_version": { "$ref": "common.defs.json#/$defs/prompt_version" },
+    "generated_at": { "$ref": "common.defs.json#/$defs/date_time" },
+    "student_id": { "$ref": "common.defs.json#/$defs/student_id" },
+    "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+    "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" },
+    "grade": { "type": "string", "pattern": "^g[0-9]{2}$" },
+
+    "based_on": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["homework_ids", "evidence_seq_from", "evidence_seq_to", "knowledge_base_version"],
+      "properties": {
+        "homework_ids": {
+          "type": "array",
+          "maxItems": 100,
+          "items": { "$ref": "common.defs.json#/$defs/homework_id" }
+        },
+        "evidence_seq_from": { "type": "integer", "minimum": 0 },
+        "evidence_seq_to": { "type": "integer", "minimum": 0 },
+        "knowledge_base_version": { "$ref": "common.defs.json#/$defs/semantic_version" },
+        "knowledge_base_review_status": { "$ref": "common.defs.json#/$defs/review_status" },
+        "plan_ids": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "common.defs.json#/$defs/plan_id" }
+        },
+        "session_ids": {
+          "type": "array",
+          "maxItems": 200,
+          "items": { "$ref": "common.defs.json#/$defs/session_id" }
+        }
+      },
+      "description": "画像的可复现凭据：知道它由哪些证据与哪一版知识库推出"
+    },
+
+    "knowledge_points": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 400,
+      "items": { "$ref": "#/$defs/kp_assessment" }
+    },
+    "unmapped_items": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["question_id", "description"],
+        "properties": {
+          "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+          "description": { "type": "string", "minLength": 3, "maxLength": 300 }
+        }
+      },
+      "description": "来自 analysis 的 unmapped 内容，供人工补齐知识库（R13）"
+    },
+    "profile_notes": { "type": ["string", "null"], "maxLength": 2000 }
+  },
+
+  "$defs": {
+    "kp_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "knowledge_point_id",
+        "status",
+        "confidence",
+        "confidence_basis",
+        "observations",
+        "hypotheses",
+        "evidence_ids",
+        "dimensions",
+        "next_verification"
+      ],
+      "properties": {
+        "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+        "status": { "$ref": "common.defs.json#/$defs/mastery_status" },
+        "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+        "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" },
+        "observations": {
+          "type": "array",
+          "maxItems": 30,
+          "items": { "$ref": "common.defs.json#/$defs/observation" }
+        },
+        "hypotheses": {
+          "type": "array",
+          "maxItems": 15,
+          "items": { "$ref": "common.defs.json#/$defs/hypothesis" }
+        },
+        "evidence_ids": {
+          "type": "array",
+          "maxItems": 500,
+          "uniqueItems": true,
+          "items": { "$ref": "common.defs.json#/$defs/evidence_id" }
+        },
+        "dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["accuracy", "independence", "transfer", "retention", "evidence_count"],
+          "properties": {
+            "accuracy": { "$ref": "common.defs.json#/$defs/metric" },
+            "independence": { "$ref": "common.defs.json#/$defs/metric" },
+            "transfer": { "$ref": "common.defs.json#/$defs/metric" },
+            "retention": { "$ref": "common.defs.json#/$defs/metric" },
+            "evidence_count": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "rule_applied": {
+          "type": ["string", "null"],
+          "maxLength": 200,
+          "description": "命中的 mastery-rules 规则编号（R17：判定必须可追溯到规则表，而非模型语感）"
+        },
+        "prerequisite_review": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["checked", "flagged", "rationale"],
+          "properties": {
+            "checked": {
+              "type": "array",
+              "maxItems": 20,
+              "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" }
+            },
+            "flagged": {
+              "type": "array",
+              "maxItems": 20,
+              "items": { "$ref": "common.defs.json#/$defs/knowledge_point_id" }
+            },
+            "rationale": { "type": "string", "minLength": 5, "maxLength": 600 }
+          },
+          "description": "前置知识只做检查并说明理由，禁止自动标为薄弱"
+        },
+        "next_verification": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["needed", "reason"],
+          "properties": {
+            "needed": { "type": "boolean" },
+            "reason": { "type": "string", "minLength": 3, "maxLength": 400 },
+            "question": { "type": ["string", "null"], "maxLength": 1500 },
+            "question_kind": { "$ref": "common.defs.json#/$defs/question_kind" },
+            "target_error_pattern": { "type": ["string", "null"], "maxLength": 300 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "unknown" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "confidence": { "type": "null" },
+              "evidence_ids": { "maxItems": 0 },
+              "dimensions": {
+                "properties": { "evidence_count": { "const": 0 } }
+              },
+              "next_verification": {
+                "if": { "type": "object" },
+                "then": { "properties": { "needed": { "const": true } } }
+              }
+            }
+          },
+          "description": "unknown 的机器定义：无证据、不给置信度、必须提出验证请求（R16）"
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["mastered", "needs_support"] } }, "required": ["status"] },
+          "then": {
+            "properties": { "evidence_ids": { "minItems": 1 } },
+            "required": ["rule_applied"],
+            "$comment": "mastered/needs_support 是强结论：必须有证据且写明命中的规则（R15/R17）"
+          }
+        }
+      ]
+    }
+  },
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "knowledge-diagnosis",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T20:10:00+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": null,
+      "confidence_basis": "本次仅一个知识点有证据，整体画像置信度不给出",
+      "grade": "g07",
+      "based_on": {
+        "homework_ids": ["hw_20261101_001"],
+        "evidence_seq_from": 1,
+        "evidence_seq_to": 3,
+        "knowledge_base_version": "1.0.0",
+        "knowledge_base_review_status": "pending_review",
+        "plan_ids": [],
+        "session_ids": []
+      },
+      "knowledge_points": [
+        {
+          "knowledge_point_id": "g7.math.a04.02.04",
+          "status": "developing",
+          "confidence": 0.45,
+          "confidence_basis": "仅 1 条本次证据，且证据为需人工确认前的假设级；未达 needs_support 的多次互证门槛",
+          "observations": [
+            "本次作业 1 题在去括号步骤出现常数项漏变号",
+            "该生随后在其错误结果上合并同类项正确"
+          ],
+          "hypotheses": [
+            {
+              "statement": "可能是负号逐项分配的规则未稳固建立",
+              "needs_verification": true,
+              "verification_question_id": "q001_probe_1",
+              "alternative_explanations": ["一次性疏漏"]
+            }
+          ],
+          "evidence_ids": ["ev_stu_7a1f_0003"],
+          "dimensions": {
+            "accuracy": { "value": 0.0, "evidence_count": 1, "basis": "1 题错" },
+            "independence": { "value": null, "evidence_count": 0, "basis": "完成场景为 home_unsupervised，无法判定独立性" },
+            "transfer": { "value": null, "evidence_count": 0, "basis": "无变式题证据" },
+            "retention": { "value": null, "evidence_count": 0, "basis": "无间隔复测证据" },
+            "evidence_count": 1
+          },
+          "rule_applied": "MR-02（单一证据且表现不稳定 → developing）",
+          "prerequisite_review": {
+            "checked": ["g7.math.a04.02.02", "g7.math.a01.02.03"],
+            "flagged": [],
+            "rationale": "合并同类项与相反数在本次均有正确表现，不判前置薄弱"
+          },
+          "next_verification": {
+            "needed": true,
+            "reason": "一次错误不足以判定 needs_support，也不足以排除规则性缺陷（R15）",
+            "question": "化简：-(3a-5)+2a；要求写出每一步并说明括号内符号如何变化",
+            "question_kind": "variation",
+            "target_error_pattern": "括号前负号只作用于首项"
+          }
+        }
+      ],
+      "unmapped_items": [],
+      "profile_notes": "知识库尚未经人工核对，本画像只用于流程验证，不得作为面向家长的正式结论"
+    },
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "knowledge-diagnosis",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T20:10:00+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": null,
+      "confidence_basis": "包含 unknown 项，整体不给置信度",
+      "grade": "g07",
+      "based_on": {
+        "homework_ids": [],
+        "evidence_seq_from": 0,
+        "evidence_seq_to": 0,
+        "knowledge_base_version": "1.0.0",
+        "knowledge_base_review_status": "pending_review",
+        "plan_ids": [],
+        "session_ids": []
+      },
+      "knowledge_points": [
+        {
+          "knowledge_point_id": "g7.math.a02.03.01",
+          "status": "unknown",
+          "confidence": null,
+          "confidence_basis": "无任何证据，不给置信度（R16）",
+          "observations": [],
+          "hypotheses": [],
+          "evidence_ids": [],
+          "dimensions": {
+            "accuracy": { "value": null, "evidence_count": 0, "basis": "no evidence" },
+            "independence": { "value": null, "evidence_count": 0, "basis": "no evidence" },
+            "transfer": { "value": null, "evidence_count": 0, "basis": "no evidence" },
+            "retention": { "value": null, "evidence_count": 0, "basis": "no evidence" },
+            "evidence_count": 0
+          },
+          "rule_applied": "MR-00（无证据 → unknown）",
+          "prerequisite_review": null,
+          "next_verification": {
+            "needed": true,
+            "reason": "该知识点从未被测量",
+            "question": "计算 (-2)^4 与 -2^4，并说明两者结果为何不同",
+            "question_kind": "diagnostic_probe",
+            "target_error_pattern": "把负号当作底数之外的部分"
+          }
+        }
+      ],
+      "unmapped_items": [
+        { "question_id": "q001", "description": "疑似有理数乘方练习，指数不可辨，无法确认所考知识点" }
+      ],
+      "profile_notes": null
+    }
+  ]
+}

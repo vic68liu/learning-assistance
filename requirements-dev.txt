@@ -1,0 +1,3 @@
+# 开发依赖（不进运行时路径）。ADR-0007。
+-r requirements.txt
+pytest~=9.2            # Layer 1 单元测试（ADR-0004）；若未获批准，回退方案为 unittest 参数化

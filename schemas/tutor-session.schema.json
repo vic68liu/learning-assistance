@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.learning-assistance/schemas/tutor-session.schema.json",
+  "title": "Math Tutor Session Output",
+  "description": "math-tutor 的输出契约。会话结果必须能作为 evidence 回写（ADR-0003）；hint_level_max > 1 不得记为 independent（R18）；一次会话不得修改永久画像（R15）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "skill_name",
+    "prompt_version",
+    "generated_at",
+    "student_id",
+    "confidence",
+    "confidence_basis",
+    "session_id",
+    "knowledge_point_id",
+    "question_id",
+    "turns",
+    "outcome",
+    "verification",
+    "evidence_write",
+    "student_reply"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "common.defs.json#/$defs/semantic_version" },
+    "skill_name": { "const": "math-tutor" },
+    "prompt_version": { "$ref": "common.defs.json#/$defs/prompt_version" },
+    "generated_at": { "$ref": "common.defs.json#/$defs/date_time" },
+    "student_id": { "$ref": "common.defs.json#/$defs/student_id" },
+    "confidence": { "$ref": "common.defs.json#/$defs/confidence" },
+    "confidence_basis": { "$ref": "common.defs.json#/$defs/confidence_basis" },
+
+    "session_id": { "$ref": "common.defs.json#/$defs/session_id" },
+    "knowledge_point_id": { "$ref": "common.defs.json#/$defs/knowledge_point_id" },
+    "question_id": { "$ref": "common.defs.json#/$defs/question_id" },
+    "plan_id": { "anyOf": [ { "$ref": "common.defs.json#/$defs/plan_id" }, { "type": "null" } ] },
+    "prior_status": {
+      "anyOf": [ { "$ref": "common.defs.json#/$defs/mastery_status" }, { "type": "null" } ],
+      "description": "会话开始时的诊断状态，仅作上下文，本 Skill 无权改写（R15）"
+    },
+
+    "turns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 60,
+      "items": { "$ref": "#/$defs/turn" }
+    },
+
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["final_correct", "independence", "hint_level_max", "explanation_quality", "answer_requested"],
+      "properties": {
+        "final_correct": { "type": "boolean" },
+        "independence": { "$ref": "common.defs.json#/$defs/independence" },
+        "hint_level_max": { "$ref": "common.defs.json#/$defs/hint_level" },
+        "explanation_quality": { "$ref": "common.defs.json#/$defs/explanation_quality" },
+        "answer_requested": {
+          "type": "boolean",
+          "description": "学生主动索要答案（测试场景之一），此时 must_not_reveal_answer 必须为 true"
+        },
+        "answer_revealed": {
+          "const": false,
+          "description": "硬约束：本 Skill 不得泄露完整答案。此字段为 false 是唯一合法值，出现 true 即 Layer 2 直接判失败"
+        },
+        "stalled": { "type": "boolean", "description": "连续提示仍无法推进，建议回退前置知识点" },
+        "next_recommendation": {
+          "type": ["string", "null"],
+          "maxLength": 400,
+          "enum": [
+            "advance_to_next_plan_activity",
+            "repeat_with_variation",
+            "fall_back_to_prerequisite",
+            "schedule_spaced_review",
+            "needs_human_check",
+            null
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "hint_level_max": { "enum": [2, 3, 4] } }, "required": ["hint_level_max"] },
+          "then": {
+            "properties": { "independence": { "const": "assisted" } }
+          },
+          "description": "接受 2 级及以上提示后答对，不得记为 independent（R18）"
+        },
+        {
+          "if": { "properties": { "final_correct": { "const": true } }, "required": ["final_correct"] },
+          "then": {
+            "properties": { "explanation_quality": { "enum": ["adequate", "thorough"] } }
+          },
+          "description": "答对但无法解释时，不能同时记 final_correct=true 与高解释质量之外的\"掌握\"含义"
+        }
+      ]
+    },
+
+    "verification": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["performed", "question_id", "result", "independence", "status"],
+      "properties": {
+        "performed": { "type": "boolean" },
+        "question_id": { "anyOf": [ { "$ref": "common.defs.json#/$defs/question_id" }, { "type": "null" } ] },
+        "result": { "enum": ["correct", "incorrect", "not_attempted", "unreadable", null] },
+        "independence": { "$ref": "common.defs.json#/$defs/independence" },
+        "status": { "$ref": "common.defs.json#/$defs/verification_status" },
+        "reason": { "type": ["string", "null"], "maxLength": 400 },
+        "differs_in_surface_form": {
+          "type": "boolean",
+          "description": "验证题必须换数字或换表述，否则只是模仿例题而非迁移（教学规则\"独立验证\"）"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "performed": { "const": true } }, "required": ["performed"] },
+          "then": {
+            "required": ["differs_in_surface_form"],
+            "properties": {
+              "question_id": { "type": "string" },
+              "differs_in_surface_form": { "const": true }
+            }
+          }
+        }
+      ]
+    },
+
+    "evidence_write": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requested", "client_event_id"],
+      "properties": {
+        "requested": { "type": "boolean" },
+        "client_event_id": { "$ref": "common.defs.json#/$defs/identifier" },
+        "event_id": { "anyOf": [ { "$ref": "common.defs.json#/$defs/evidence_id" }, { "type": "null" } ] },
+        "seq": { "type": ["integer", "null"], "minimum": 0 },
+        "event_type": {
+          "enum": ["tutoring_turn", "verification_result", "exit_ticket_result", null]
+        },
+        "failure_reason": { "type": ["string", "null"], "maxLength": 300 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "requested": { "const": true } }, "required": ["requested"] },
+          "then": {
+            "required": ["event_id", "seq", "event_type"],
+            "properties": {
+              "event_id": { "type": "string" },
+              "seq": { "type": "integer" },
+              "event_type": { "type": "string" }
+            }
+          },
+          "description": "声称已写入就必须带回 state_store 分配的 event_id 与 seq，否则视为未写入（R25）"
+        }
+      ]
+    },
+
+    "student_reply": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 3000,
+      "description": "学生可读的自然语言回复。必须只含一个问题（教学规则 1），且不含完整答案"
+    },
+    "observations": {
+      "type": "array",
+      "maxItems": 20,
+      "items": { "$ref": "common.defs.json#/$defs/observation" }
+    },
+    "hypotheses": {
+      "type": "array",
+      "maxItems": 10,
+      "items": { "$ref": "common.defs.json#/$defs/hypothesis" }
+    }
+  },
+
+  "$defs": {
+    "turn": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["turn_no", "role", "hint_level"],
+      "properties": {
+        "turn_no": { "type": "integer", "minimum": 1 },
+        "role": { "enum": ["tutor", "student"] },
+        "content": { "type": "string", "maxLength": 4000 },
+        "hint_level": { "$ref": "common.defs.json#/$defs/hint_level" },
+        "question_count": {
+          "anyOf": [ { "const": 1 }, { "type": "null" } ],
+          "description": "tutor 轮次只允许一个问题（教学规则 1）。student 轮次可为 null"
+        },
+        "correctness": { "enum": ["correct", "incorrect", "partially_correct", "not_applicable", null] },
+        "independence": { "anyOf": [ { "$ref": "common.defs.json#/$defs/independence" }, { "type": "null" } ] },
+        "explanation_quality": { "anyOf": [ { "$ref": "common.defs.json#/$defs/explanation_quality" }, { "type": "null" } ] }
+      }
+    }
+  },
+
+  "examples": [
+    {
+      "schema_version": "1.0.0",
+      "skill_name": "math-tutor",
+      "prompt_version": "v1",
+      "generated_at": "2026-11-01T20:55:00+08:00",
+      "student_id": "stu_7a1f",
+      "confidence": null,
+      "confidence_basis": "本 Skill 不给主观置信度，只记录客观判定",
+      "session_id": "ts_20261101_001",
+      "knowledge_point_id": "g7.math.a04.02.04",
+      "question_id": "d1_q01",
+      "plan_id": "plan_20261101_001",
+      "prior_status": "developing",
+      "turns": [
+        { "turn_no": 1, "role": "tutor", "content": "你先说说，括号前面是减号的时候，去掉括号要做哪一步？", "hint_level": 0, "question_count": 1, "correctness": null, "independence": null, "explanation_quality": null },
+        { "turn_no": 2, "role": "student", "content": "把括号去掉，前面那项变号。", "hint_level": 0, "question_count": null, "correctness": "partially_correct", "independence": "independent", "explanation_quality": "partial" },
+        { "turn_no": 3, "role": "tutor", "content": "那括号里有两项的时候，第二项怎么办？用 -(3a-5) 试一下。", "hint_level": 1, "question_count": 1, "correctness": null, "independence": null, "explanation_quality": null },
+        { "turn_no": 4, "role": "student", "content": "= -3a+5", "hint_level": 1, "question_count": null, "correctness": "correct", "independence": "assisted", "explanation_quality": "adequate" }
+      ],
+      "outcome": {
+        "final_correct": true,
+        "independence": "assisted",
+        "hint_level_max": 1,
+        "explanation_quality": "adequate",
+        "answer_requested": false,
+        "answer_revealed": false,
+        "stalled": false,
+        "next_recommendation": "repeat_with_variation"
+      },
+      "verification": {
+        "performed": true,
+        "question_id": "d1_verify_1",
+        "result": "correct",
+        "independence": "independent",
+        "status": "program_verified",
+        "reason": null,
+        "differs_in_surface_form": true
+      },
+      "evidence_write": {
+        "requested": true,
+        "client_event_id": "ts_20261101_001_v1",
+        "event_id": "ev_stu_7a1f_0004",
+        "seq": 4,
+        "event_type": "verification_result",
+        "failure_reason": null
+      },
+      "student_reply": "很好，这次你把括号里的两项都变了号。为什么 -5 变成了 +5？用你自己的话说一遍，然后做一道新的：-(4b-7)+2b。",
+      "observations": [
+        "在第 1 级提示（概念提醒）下，学生能正确写出 -(3a-5) = -3a+5",
+        "学生在提示前只说明了\"前面那项变号\"，未涵盖第二项"
+      ],
+      "hypotheses": [
+        { "statement": "学生可能把去括号规则表述为单项目变号，需确认是否适用于含常数项的情形", "needs_verification": true, "verification_question_id": "d1_verify_1", "alternative_explanations": [] }
+      ]
+    }
+  ]
+}

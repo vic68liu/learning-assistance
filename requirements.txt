@@ -1,0 +1,5 @@
+# 运行时依赖（ADR-0007）。锁定主次版本，禁止裸包名。
+# 安装： .venv/Scripts/python.exe -m pip install -r requirements.txt
+sympy~=1.14            # 符号数学验证：ADR-0002 / AGENTS.md R21（已批准）
+jsonschema~=4.26       # Draft 2020-12 校验：Layer 2 / AGENTS.md R7（Proposed，待批准）
+referencing~=0.37      # jsonschema 的跨文件 $ref 解析，本仓库直接 import（Proposed，待批准）
