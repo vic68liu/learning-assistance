@@ -28,6 +28,11 @@
     "review_status": { "$ref": "common.defs.json#/$defs/review_status" },
     "reviewed_by": { "type": ["string", "null"], "maxLength": 64 },
     "reviewed_at": { "anyOf": [ { "$ref": "common.defs.json#/$defs/date_time" }, { "type": "null" } ] },
+    "provenance_note": {
+      "type": ["string", "null"],
+      "maxLength": 4000,
+      "description": "记录本文件的来源与局限（谁提供的大纲、哪些是推断、哪些教材内容未建模）。R13/R14 的审计入口"
+    },
     "scope": {
       "type": "object",
       "additionalProperties": false,

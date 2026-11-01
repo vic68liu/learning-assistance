@@ -24,6 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 KB_DIR = ROOT / "knowledge-base"
 POINTS_FILE = KB_DIR / "grade-7-math.json"
 RELATIONS_FILE = KB_DIR / "knowledge-relations.json"
+OUTLINE_CSV = KB_DIR / "outline-t1.csv"
 
 ID_RE = re.compile(r"^g7\.math\.[ab][0-9]{2}\.[0-9]{2}\.[0-9]{2}$")
 
@@ -213,10 +214,82 @@ def check_review_gate(points: dict[str, Any], relations: dict[str, Any]) -> list
     return problems
 
 
+def check_outline_csv(points: dict[str, Any], relations: dict[str, Any], csv_path: Path) -> list[str]:
+    """校验 outline-t1.csv 与 JSON 的同步性。
+
+    CSV 是人工可编辑的输入凭据（教材照抄 + 高频观察），JSON 是机器消费形式。
+    两者一旦漂移，"知识点来自人工大纲"这个声称就会变成空话，所以必须机械比对。
+    """
+    import csv as _csv
+
+    if not csv_path.exists():
+        return [f"缺少大纲凭据文件: {csv_path}"]
+
+    with csv_path.open(encoding="utf-8", newline="") as fh:
+        rows = list(_csv.DictReader(fh))
+    if not rows:
+        return [f"{csv_path.name} 没有数据行"]
+
+    problems: list[str] = []
+    title_to_id = {e["title"]: e["id"] for e in points.get("knowledge_points", [])}
+    chapter_title = {c["code"]: c["title"] for c in points.get("scope", {}).get("chapters", [])}
+    id_to_entry = {e["id"]: e for e in points.get("knowledge_points", [])}
+
+    csv_titles = {r.get("kp_title", "").strip() for r in rows}
+    for missing in sorted(set(title_to_id) - csv_titles):
+        problems.append(f"{csv_path.name}: 知识点 {title_to_id[missing]}「{missing}」在 CSV 中缺失")
+    for extra in sorted(csv_titles - set(title_to_id)):
+        problems.append(f"{csv_path.name}: CSV 行「{extra}」在 JSON 中不存在（禁止绕过审核新增）")
+
+    for row in rows:
+        title = (row.get("kp_title") or "").strip()
+        kp_id = title_to_id.get(title)
+        if not kp_id:
+            continue
+        entry = id_to_entry[kp_id]
+        if (row.get("section_title") or "").strip() != entry["section_title"]:
+            problems.append(f"{kp_id}: CSV 节名与 JSON 不一致")
+        if (row.get("chapter_title") or "").strip() != chapter_title.get(entry["chapter_code"]):
+            problems.append(f"{kp_id}: CSV 章名与 scope.chapters 不一致")
+        if (row.get("volume") or "").strip() != ("七上" if entry["id"][8] == "a" else "七下"):
+            problems.append(f"{kp_id}: CSV 册码与 ID 不一致")
+        for name in filter(None, (row.get("prereq") or "").split(";")):
+            if name.strip() not in title_to_id:
+                problems.append(f"{kp_id}: CSV 前置「{name.strip()}」不是已审核存在的知识点标题")
+        for name in filter(None, (row.get("confused_with") or "").split(";")):
+            if name.strip() not in title_to_id:
+                problems.append(f"{kp_id}: CSV 易混「{name.strip()}」不是已存在的知识点标题")
+
+    # PREREQUISITE 边必须与 CSV 的 prereq 列一一对应
+    edges_from_json: dict[str, set[str]] = {}
+    for edge in relations.get("relations", []):
+        if isinstance(edge, dict) and edge.get("type") == "PREREQUISITE":
+            edges_from_json.setdefault(edge["from"], set()).add(edge["to"])
+
+    edges_from_csv: dict[str, set[str]] = {}
+    for row in rows:
+        kp_id = title_to_id.get((row.get("kp_title") or "").strip())
+        if not kp_id:
+            continue
+        deps = {title_to_id[n.strip()] for n in (row.get("prereq") or "").split(";") if n.strip() in title_to_id}
+        edges_from_csv[kp_id] = deps
+
+    for kp_id in sorted(set(edges_from_json) | set(edges_from_csv)):
+        json_deps, csv_deps = edges_from_json.get(kp_id, set()), edges_from_csv.get(kp_id, set())
+        if json_deps != csv_deps:
+            problems.append(
+                f"{kp_id}: PREREQUISITE 边与 CSV 不一致 "
+                f"仅 JSON 有={sorted(json_deps - csv_deps)} 仅 CSV 有={sorted(csv_deps - json_deps)}"
+            )
+    return problems
+
+
 def run(
     strict: bool = False,
     points_file: Path = POINTS_FILE,
     relations_file: Path = RELATIONS_FILE,
+    outline_csv: Path = OUTLINE_CSV,
+    require_outline: bool = True,
 ) -> tuple[bool, list[str], dict[str, Any]]:
     """返回 (是否有待人工确认项, 问题列表, 统计)。路径可注入以便单测覆盖失败分支。"""
     if not points_file.exists():
@@ -241,6 +314,8 @@ def run(
     rel_problems, prereq_edges = check_relations(relations, active_ids)
     problems.extend(rel_problems)
     problems.extend(check_prerequisite_dag(prereq_edges))
+    if require_outline:
+        problems.extend(check_outline_csv(points, relations, outline_csv))
     review_problems = check_review_gate(points, relations)
     # 推断关系未审不是结构错误，单独作为"待办"返回，便于 REVIEW-QUEUE 对齐
     problems.extend(p for p in review_problems if not p.startswith("[REVIEW-REQUIRED]"))

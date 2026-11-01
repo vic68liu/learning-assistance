@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "math",
+  "grade": "g07",
+  "textbook_version": "人教版 2024 秋版 七年级上册（待实体书核对）",
+  "semantics": "方向定义：from 依赖 to，即 to 是 from 的前置知识。因此 PREREQUISITE 边 (from→to) 表示\"要先会 to 才可能做对 from\"。拓扑排序的先后顺序即学习顺序。",
+  "symmetric_types_note": "EASILY_CONFUSED / SIMILAR / RELATED 为对称关系，只存一条边，读侧需按无向处理。",
+  "review_status": "pending_review",
+  "provenance_note": "全部由 OpenCode 依据知识内容的教学逻辑推断，origin 一律为 inferred、review_status 一律为 pending_review。依据 ADR-0006：这些边在人工确认前**不得用于给出掌握度结论**，只能用于生成待确认的验证提问。scripts/validate_knowledge_base.py 会把它们列进 REVIEW-QUEUE。",
+  "relations": [
+    { "from": "g7.math.a01.02.02", "to": "g7.math.a01.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9, "note": "多重符号化简直接使用相反数定义" },
+    { "from": "g7.math.a01.02.03", "to": "g7.math.a01.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.8 },
+    { "from": "g7.math.a01.02.04", "to": "g7.math.a01.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95 },
+    { "from": "g7.math.a01.02.05", "to": "g7.math.a01.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95, "note": "两个负数比较依赖\"绝对值大的反而小\"" },
+
+    { "from": "g7.math.a02.01.01", "to": "g7.math.a01.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9, "note": "异号相加需先算绝对值差" },
+    { "from": "g7.math.a02.01.02", "to": "g7.math.a01.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95 },
+    { "from": "g7.math.a02.01.02", "to": "g7.math.a02.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.01.03", "to": "g7.math.a02.01.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.01.03", "to": "g7.math.a02.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+
+    { "from": "g7.math.a02.02.01", "to": "g7.math.a01.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+    { "from": "g7.math.a02.02.02", "to": "g7.math.a02.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.02.03", "to": "g7.math.a02.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.02.04", "to": "g7.math.a02.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.03.01", "to": "g7.math.a02.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.03.02", "to": "g7.math.a02.03.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95 },
+    { "from": "g7.math.a02.03.02", "to": "g7.math.a02.02.04", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a02.03.02", "to": "g7.math.a02.01.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+
+    { "from": "g7.math.a03.02.01", "to": "g7.math.a03.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a03.02.01", "to": "g7.math.a02.03.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95, "note": "负数代入含乘式子时的漏括号正是 -a^n 与 (-a)^n 混淆的表现形式" },
+
+    { "from": "g7.math.a04.01.01", "to": "g7.math.a03.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.8 },
+    { "from": "g7.math.a04.02.01", "to": "g7.math.a04.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a04.02.02", "to": "g7.math.a04.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95 },
+    { "from": "g7.math.a04.02.02", "to": "g7.math.a02.01.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9, "note": "系数相加是有理数加法" },
+    { "from": "g7.math.a04.02.03", "to": "g7.math.a02.02.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+    { "from": "g7.math.a04.02.04", "to": "g7.math.a04.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a04.02.04", "to": "g7.math.a01.02.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85, "note": "逐项变号本质是求每一项的相反数" },
+
+    { "from": "g7.math.a05.02.01", "to": "g7.math.a02.01.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.01", "to": "g7.math.a01.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+    { "from": "g7.math.a05.02.02", "to": "g7.math.a04.02.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.02", "to": "g7.math.a02.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9, "note": "系数化为 1 是有理数除法" },
+    { "from": "g7.math.a05.02.03", "to": "g7.math.a04.02.04", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95 },
+    { "from": "g7.math.a05.02.03", "to": "g7.math.a05.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+    { "from": "g7.math.a05.02.04", "to": "g7.math.a02.02.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.95, "note": "去分母漏乘的根因通常是分配律未逐项" },
+    { "from": "g7.math.a05.02.04", "to": "g7.math.a02.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.7 },
+    { "from": "g7.math.a05.02.05", "to": "g7.math.a05.02.01", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.05", "to": "g7.math.a05.02.02", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.05", "to": "g7.math.a05.02.03", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.05", "to": "g7.math.a05.02.04", "type": "PREREQUISITE", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+
+    { "from": "g7.math.a01.02.01", "to": "g7.math.a01.02.03", "type": "EASILY_CONFUSED", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85, "note": "相反数与绝对值：同一对数字，两种运算" },
+    { "from": "g7.math.a02.03.01", "to": "g7.math.a01.02.02", "type": "EASILY_CONFUSED", "origin": "inferred", "review_status": "pending_review", "confidence": 0.8 },
+    { "from": "g7.math.a04.02.03", "to": "g7.math.a04.02.04", "type": "EASILY_CONFUSED", "origin": "inferred", "review_status": "pending_review", "confidence": 0.9 },
+    { "from": "g7.math.a05.02.01", "to": "g7.math.a05.02.02", "type": "EASILY_CONFUSED", "origin": "inferred", "review_status": "pending_review", "confidence": 0.75, "note": "移项要变号 vs 合并同类项不变号" },
+    { "from": "g7.math.a04.02.04", "to": "g7.math.a05.02.03", "type": "TRANSFER_TO", "origin": "inferred", "review_status": "pending_review", "confidence": 0.85 },
+    { "from": "g7.math.a05.02.04", "to": "g7.math.a02.02.02", "type": "RELATED", "origin": "inferred", "review_status": "pending_review", "confidence": 0.8 }
+  ]
+}

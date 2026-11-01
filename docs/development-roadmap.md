@@ -10,8 +10,8 @@
 |---|---|---|---|---|
 | P1 | 工程基线 | 骨架 + `AGENTS.md`(R1–R29) + README | R1–R29 可逐条核对；无学生数据/凭证被跟踪 | ✅ commit `77ca977` |
 | P2 | 契约与决策 | `skill-contracts.md`、`skill-dependency-map.md`、ADR-0001~0007、架构与路线图 | 三个"能否串联"问题有字段级答案 | ✅ 本提交 |
-| P3 | 数据契约落地 | 5 份 JSON Schema + 校验脚本 + Layer 1 测试 | `validate_schemas.py` + `pytest` 全绿（真实执行） | ⏳ 下一提交 |
-| P3.5 | 知识库结构化 | `grade-7-math.json`(T1 26 点)、关系表、`outline-t1.csv`、REVIEW-QUEUE | **人工核对教材版次 + 审核 26 点**；DAG 校验通过 | ⏳ 依赖人工 |
+| P3 | 数据契约落地 | 5 份 JSON Schema + 校验脚本 + Layer 1 测试 | `validate_schemas.py` + `pytest` 全绿（真实执行） | ✅ commit `35f2eb1` |
+| P3.5 | 知识库结构化 | `grade-7-math.json`(T1 26 点)、关系表、`outline-t1.csv`、REVIEW-QUEUE | **人工核对教材版次 + 审核 26 点**；DAG 校验通过 | 🟡 结构已建并通过校验，待人工审核 |
 | P3.7 | OCR spike | 10 张真实手写（脱敏/合成）识别记录 + 结论 | 明确 homework-analysis 输入边界：文本优先 or 图像可用 | ⛔ 未开始 |
 | P4 | homework-analysis | 首个 Skill：SKILL.md + 4 references + validate 脚本 + 20 用例 | Layer 2 合规率 100%；验算覆盖率有实测数字；步骤级错误定位案例通过 | ⛔ |
 | P5 | knowledge-diagnosis | Skill + `mastery-rules.md`（量化规则表）+ 8 场景测试 | 每个结论都有 `evidence_ids`；单次错误不产出 `needs_support` | ⛔ |

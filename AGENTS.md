@@ -214,4 +214,6 @@ git ls-files | grep -Ei "student-data|\.env|key|credentials"   # 期望：无输
    `needs_human_check`，这是设计选择而非 bug。
 4. **无 Workflow Engine** —— PoC 由主 Agent 按序调用 Skill + `scripts/state_store.py` 持久化状态；
    在真正引入状态机之前，任何"自动编排"表述都不成立。
-5. **依赖审批** —— `sympy` 已批准（ADR-0002）；`jsonschema`、`pytest` 待补 ADR-0007 正式批准。
+5. **依赖审批** —— `sympy` 已批准（ADR-0002）；`jsonschema`、`referencing`、`pytest`
+   已在 `ADR-0007` 登记但仍为 `Proposed`，**批准前不得进入部署阶段（P10）**。
+   本阶段代码已实际使用它们，ADR-0007 显式承认了这一事实。

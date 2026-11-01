@@ -130,7 +130,7 @@ def write_pair(tmp_path: Path, points: dict, relations: dict) -> tuple[Path, Pat
 
 def test_valid_baseline_passes(tmp_path: Path):
     p_file, r_file = write_pair(tmp_path, BASE_DOC, BASE_RELATIONS)
-    pending, problems, stats = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    pending, problems, stats = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert problems == [], problems
     assert stats["total"] == 3 and stats["active"] == 3
     assert stats["prerequisite_edges"] == 2
@@ -142,7 +142,7 @@ def test_duplicate_id_is_caught(tmp_path: Path):
     points = copy.deepcopy(BASE_DOC)
     points["knowledge_points"].append(copy.deepcopy(points["knowledge_points"][0]))
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("ID 重复" in p for p in problems)
 
 
@@ -150,7 +150,7 @@ def test_malformed_id_is_caught(tmp_path: Path):
     points = copy.deepcopy(BASE_DOC)
     points["knowledge_points"][0]["id"] = "g7.math.4.2.1"
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("ID 文法非法" in p for p in problems)
 
 
@@ -158,7 +158,7 @@ def test_chapter_section_mismatch_is_caught(tmp_path: Path):
     points = copy.deepcopy(BASE_DOC)
     points["knowledge_points"][0]["section_code"] = "03"
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("与 ID 中的 02 不一致" in p for p in problems)
 
 
@@ -166,7 +166,7 @@ def test_chapter_not_declared_in_scope_is_caught(tmp_path: Path):
     points = copy.deepcopy(BASE_DOC)
     points["scope"]["chapters"] = [c for c in points["scope"]["chapters"] if c["code"] != "a02"]
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("未在 scope.chapters 中声明" in p for p in problems)
 
 
@@ -174,7 +174,7 @@ def test_relation_to_unknown_id_is_caught(tmp_path: Path):
     relations = copy.deepcopy(BASE_RELATIONS)
     relations["relations"][0]["to"] = "g7.math.a09.01.01"
     p_file, r_file = write_pair(tmp_path, BASE_DOC, relations)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("to 不存在或已废弃" in p for p in problems)
 
 
@@ -182,7 +182,7 @@ def test_relation_type_outside_vocab_is_caught(tmp_path: Path):
     relations = copy.deepcopy(BASE_RELATIONS)
     relations["relations"][0]["type"] = "LEADS_TO"
     p_file, r_file = write_pair(tmp_path, BASE_DOC, relations)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("不在统一词表" in p for p in problems)
 
 
@@ -190,7 +190,7 @@ def test_self_loop_is_caught(tmp_path: Path):
     relations = copy.deepcopy(BASE_RELATIONS)
     relations["relations"][0]["to"] = relations["relations"][0]["from"]
     p_file, r_file = write_pair(tmp_path, BASE_DOC, relations)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("自环" in p for p in problems)
 
 
@@ -217,7 +217,7 @@ def test_reviewed_top_status_requires_credentials(tmp_path: Path):
     points["review_status"] = "reviewed"
     points["reviewed_by"] = None
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("reviewed_by" in p or "缺" in p for p in problems)
 
 
@@ -227,16 +227,55 @@ def test_reviewed_top_status_with_unreviewed_children_is_caught(tmp_path: Path):
     points["reviewed_by"] = "张老师"
     points["reviewed_at"] = "2026-11-01"
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert any("仍未审" in p for p in problems)
 
 
 def test_missing_files_default_skip_but_strict_fails(tmp_path: Path):
     missing = tmp_path / "nope.json"
-    pending, problems, stats = vkb.run(strict=False, points_file=missing, relations_file=missing)
+    pending, problems, stats = vkb.run(strict=False, points_file=missing, relations_file=missing, require_outline=False)
     assert stats == {"missing": True} and problems == [] and pending is False
-    _, problems_strict, _ = vkb.run(strict=True, points_file=missing, relations_file=missing)
+    _, problems_strict, _ = vkb.run(strict=True, points_file=missing, relations_file=missing, require_outline=False)
     assert problems_strict
+
+
+def test_repo_csv_and_json_are_aligned():
+    """真实仓库的 outline-t1.csv 必须与 JSON 完全同步，否则"人工大纲来源"这个声称不成立。"""
+    pending, problems, stats = vkb.run(strict=True)
+    assert problems == [], problems
+    assert stats["active"] == 26
+    assert pending is True, "全量 inferred 未审时必须有待办"
+
+
+def test_csv_title_drift_is_caught(tmp_path: Path):
+    """CSV 与 JSON 标题漂移必须被抓到 —— 这是本次开发实际发现过的缺陷形态。"""
+    kb = Path(vkb.KB_DIR)
+    points = json.loads((kb / "grade-7-math.json").read_text(encoding="utf-8"))
+    relations = json.loads((kb / "knowledge-relations.json").read_text(encoding="utf-8"))
+    csv_text = (kb / "outline-t1.csv").read_text(encoding="utf-8")
+    drifted = csv_text.replace("有理数减法法则（减法转加法）", "减法法则（改了名字）", 1)
+
+    p_file = tmp_path / "grade-7-math.json"
+    r_file = tmp_path / "knowledge-relations.json"
+    c_file = tmp_path / "outline-t1.csv"
+    p_file.write_text(json.dumps(points, ensure_ascii=False), encoding="utf-8")
+    r_file.write_text(json.dumps(relations, ensure_ascii=False), encoding="utf-8")
+    c_file.write_text(drifted, encoding="utf-8")
+
+    _, problems, _ = vkb.run(strict=True, points_file=p_file, relations_file=r_file, outline_csv=c_file)
+    assert any("在 JSON 中不存在" in p for p in problems), problems
+    assert any("PREREQUISITE 边与 CSV 不一致" in p for p in problems), problems
+
+
+def test_missing_outline_csv_is_caught(tmp_path: Path):
+    """JSON 存在但没有大纲凭据文件时，必须报缺失而不是静默通过（R13 溯源）。"""
+    p_file = tmp_path / "grade-7-math.json"
+    r_file = tmp_path / "knowledge-relations.json"
+    write_pair(tmp_path, BASE_DOC, BASE_RELATIONS)
+    _, problems, _ = vkb.run(
+        strict=True, points_file=p_file, relations_file=r_file, outline_csv=tmp_path / "absent.csv"
+    )
+    assert any("缺少大纲凭据文件" in p for p in problems)
 
 
 def test_shared_enum_is_single_source():
@@ -261,6 +300,6 @@ def test_deprecated_kp_cannot_be_relation_endpoint(tmp_path: Path):
     entry["deprecated_at"] = "2026-11-20"
     entry["deprecated_reason"] = "并入 2.1 加法法则"
     p_file, r_file = write_pair(tmp_path, points, BASE_RELATIONS)
-    _, problems, stats = vkb.run(strict=True, points_file=p_file, relations_file=r_file)
+    _, problems, stats = vkb.run(strict=True, points_file=p_file, relations_file=r_file, require_outline=False)
     assert stats["deprecated"] == 1 and stats["active"] == 2
     assert any("不存在或已废弃" in p for p in problems)

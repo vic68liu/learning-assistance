@@ -210,6 +210,19 @@ def test_solve_rejects_two_unknowns():
     assert solve_equation("x+y=1").reason == "unsupported_equation_shape"
 
 
+def test_solve_reports_no_solution_explicitly_not_an_empty_list():
+    """矛盾方程（化简后 5=0）必须显式标注无解。
+
+    若只返回空列表，learning-plan 无法区分"题目本身无解"与"求解失败"，
+    就会把无解的题当成可用练习题发给学生。
+    """
+    r = solve_equation("2*(x+3)-5(x-1)=3(2-x)")
+    assert r.status == "program_verified"
+    assert r.reason == "equation_has_no_real_solution"
+    assert r.detail["solution_set"] == "empty"
+    assert r.detail["solutions"] == []
+
+
 def test_solve_identity_is_all_reals():
     r = solve_equation("2*(x+1)=2x+2")
     assert r.status == "program_verified"

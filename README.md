@@ -11,10 +11,15 @@
 
 ## 当前状态
 
-**P1–P3.5：工程基线 + 数据契约 + 知识库结构化。** 业务 Skill 尚未开发（`skills/` 为空）。
+**P1–P3.5：工程基线 + 治理规则 + 数据契约 + 知识库结构化（T1 26 点）已落地。**
+业务 Skill 尚未开发（`skills/` 为空），这是刻意的：契约未验收前不写业务（R27）。
 
-已知阻塞项：教材版次待人工核对、OCR/图像输入路径未定、`jsonschema`/`pytest` 依赖待正式批准。
-详见 `AGENTS.md` 第 10 节与 `knowledge-base/REVIEW-QUEUE.md`。
+实测结果（2026-11-01）：`pytest` 102 项通过；`validate_schemas.py`、`validate_skills.py`、
+`validate_knowledge_base.py` 均通过。详见 `docs/contracts-test-report.md`。
+
+已知阻塞项：教材版次待人工核对（`knowledge-base/REVIEW-QUEUE.md` 第 1 项）、
+OCR/图像输入路径未定、`state_store.py` 未实现（ADR-0003 仍为 Proposed）、
+`jsonschema`/`referencing`/`pytest` 依赖待正式批准（ADR-0007）。
 
 ## 环境准备
 

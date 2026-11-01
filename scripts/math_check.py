@@ -600,6 +600,16 @@ def solve_equation(equation: str) -> VerifyResult:
         return _needs("unsupported_equation_shape", f"symbols={syms}")
     try:
         sols = sympy.solveset(expr, sympy.Symbol(syms[0]), domain=sympy.S.Reals)
+        if sols is sympy.S.EmptySet:
+            # 无解是**合法结论**，但不能伪装成"解出来一个空列表"：
+            # learning-plan 会据此判断题目是否可用，必须能一眼区分无解与求解失败。
+            return VerifyResult(
+                _STATUS_PROGRAM_VERIFIED,
+                True,
+                "equation_has_no_real_solution",
+                {},
+                {"solutions": [], "solution_set": "empty"},
+            )
         if not sols.is_FiniteSet:
             if sols is sympy.S.Reals:
                 return VerifyResult(_STATUS_PROGRAM_VERIFIED, True, None, {}, {"solution": "all_reals"})
@@ -608,6 +618,8 @@ def solve_equation(equation: str) -> VerifyResult:
         exact = sorted(str(s) for s in sols)
     except Exception as exc:
         return _needs("sympy_internal_error", f"{type(exc).__name__}: {exc}")
+    if not exact:  # 理论上不可达，留作结构保护：空解集绝不能被当成"已验证的解"
+        return _needs("solver_returned_empty_finite_set", str(sols))
     if any("I" in v or "nan" in v or "zoo" in v for v in exact):
         return _needs("non_real_solution", ",".join(exact))
     return VerifyResult(_STATUS_PROGRAM_VERIFIED, True, None, {}, {"solutions": exact, "decimal": values})

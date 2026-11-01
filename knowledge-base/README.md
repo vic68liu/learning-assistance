@@ -43,12 +43,17 @@ g7.math.a04.02.04
 
 这条规则决定了能否为每个点单独出验证题（`learning-plan` 与 `math-tutor` 都依赖这点）。
 
-## 关系边的 `origin` 字段 —— 关键治理设计
+## 关系边的方向与 `origin` 字段 —— 关键治理设计
+
+**方向定义：`from` 依赖 `to`，即 `to` 是 `from` 的前置知识。**
+所以"先会同类项判定，才会合并同类项"要写成 `from=合并同类项 → to=同类项判定`：
 
 ```json
-{ "from": "g7.math.a04.02.01", "to": "g7.math.a04.02.02",
+{ "from": "g7.math.a04.02.02", "to": "g7.math.a04.02.01",
   "type": "PREREQUISITE", "origin": "human", "confidence": 1.0 }
 ```
+
+`EASILY_CONFUSED` / `SIMILAR` / `RELATED` 是对称关系，只存一条边，读侧按无向处理。
 
 | origin | 含义 | 使用限制 |
 |---|---|---|
@@ -67,15 +72,23 @@ g7.math.a04.02.04
    .venv/Scripts/python.exe scripts/validate_knowledge_base.py
    ```
    检查项：ID 格式与唯一性、`PREREQUISITE` 无环、孤儿节点、`from/to` 引用存在性、
-   枚举合法性。任一失败即非零退出。
+   枚举合法性、**CSV 与 JSON 的同步性**（标题集合、章名节名、册码，以及 PREREQUISITE 边
+   必须与 CSV 的 `prereq` 列一一对应）。任一失败即非零退出。
 4. 人工逐条处置 `REVIEW-QUEUE.md`，把确认无误的条目改为 `review_status: "reviewed"`
    并填 `reviewed_by` / `reviewed_at`
 5. Git 提交，commit message 用 `feat(knowledge-base): ...`
 
+> CSV 同步检查不是锦上添花：本次开发中它立刻抓到一个真实缺陷 ——
+> JSON 与 CSV 对同一个知识点写了两个不同标题。没有这道检查，
+> "知识点来自人工大纲"就会慢慢退化成一句无法核查的话。
+
 ## 当前状态
 
-- 范围：人教版七年级上册 **第 1–5 章**（数与代数），T1 批次 26 个诊断点。
-  第 6 章几何图形初步暂缓（理由：sympy 无法符号验算图形题、且图像输入路径未定义，
-  会污染 benchmark 的归因能力）。
-- 顶层 `review_status`: **`pending_review`** —— 因为教材版次尚未经实体书核对（REVIEW-QUEUE 第 1 项）。
+- 范围：人教版七年级上册 **第 1–5 章**（数与代数），T1 批次 **26 个诊断点**、
+  **44 条关系边**（PREREQUISITE 38 条，已通过 DAG 检测）。
+  分布：第1章 5 / 第2章 9 / 第3章 2 / 第4章 5 / 第5章 5。
+- 第 6 章几何图形初步**已显式记录为排除项**并附理由与重入条件（见 JSON 的 `scope.excluded`）；
+  两个「综合与实践」不建诊断点。
+- 顶层 `review_status`: **`pending_review`**，全部条目 `origin: inferred` ——
+  因为教材版次尚未经实体书核对（REVIEW-QUEUE 第 1 项），且诊断点拆分与高频错误观察需人确认。
   在此状态解除前，任何 Skill 不得基于本知识库输出面向用户的掌握度结论。

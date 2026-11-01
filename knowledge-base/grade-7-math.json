@@ -1,0 +1,269 @@
+{
+  "schema_version": "1.0.0",
+  "subject": "math",
+  "grade": "g07",
+  "textbook_version": "人教版 2024 秋版 七年级上册（章名节名取自公开目录资料，待实体书核对）",
+  "curriculum_standard_version": "2022",
+  "review_status": "pending_review",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "scope": {
+    "volumes": ["七上"],
+    "chapters": [
+      { "code": "a01", "title": "第一章 有理数", "volume": "七上", "source_pages": null },
+      { "code": "a02", "title": "第二章 有理数的运算", "volume": "七上", "source_pages": null },
+      { "code": "a03", "title": "第三章 代数式", "volume": "七上", "source_pages": null },
+      { "code": "a04", "title": "第四章 整式的加减", "volume": "七上", "source_pages": null },
+      { "code": "a05", "title": "第五章 一元一次方程", "volume": "七上", "source_pages": null }
+    ],
+    "excluded": [
+      {
+        "code": "a06",
+        "title": "第六章 几何图形初步",
+        "reason": "sympy 无法对图形题做符号验算，且图像输入路径未经 OCR spike 验证；纳入首轮 benchmark 会让分数下降无法归因（模型能力 / 图像输入 / Skill 逻辑）",
+        "revisit_condition": "OCR spike 通过后单独建模"
+      }
+    ]
+  },
+  "provenance_note": "本文件由 OpenCode 依据公开教材目录资料结构化生成，未经人工审核。所有条目 origin=inferred、review_status=pending_review，在 REVIEW-QUEUE.md 处置完成前不得被任何 Skill 用于给出掌握度结论（AGENTS.md 第 2 节、ADR-0006）。章名与节名照抄公开目录原文，诊断点名称与拆分属于推断。未建诊断点的教材内容：第二章后「综合与实践 进位制的认识与探究」、第六章后「综合与实践 设计学校田径运动会比赛场地」——综合实践活动不是可独立验证的诊断单元；第 1/3/4/5 章中未列入 T1 的概念型小节（如 1.1 正数和负数、3.1 书写规范、5.1 方程概念、5.3 实际问题）属 T2 后置。",
+  "knowledge_points": [
+    {
+      "id": "g7.math.a01.02.01", "chapter_code": "a01", "section_code": "02",
+      "section_title": "1.2 有理数及其大小比较", "subsection_title": "1.2.3 相反数",
+      "title": "相反数的概念与求法",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["认为 a 的相反数一定是负数", "忽略 0 的相反数是 0"]
+    },
+    {
+      "id": "g7.math.a01.02.02", "chapter_code": "a01", "section_code": "02",
+      "section_title": "1.2 有理数及其大小比较", "subsection_title": "1.2.3 相反数",
+      "title": "多重符号化简（-(-a) 型）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["负号个数与结果符号对应错误", "把 -(-a) 直接当作 -a"]
+    },
+    {
+      "id": "g7.math.a01.02.03", "chapter_code": "a01", "section_code": "02",
+      "section_title": "1.2 有理数及其大小比较", "subsection_title": "1.2.4 绝对值",
+      "title": "绝对值的几何意义与求法",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["把绝对值理解成带符号的原数", "负数取绝对值时忘变号"]
+    },
+    {
+      "id": "g7.math.a01.02.04", "chapter_code": "a01", "section_code": "02",
+      "section_title": "1.2 有理数及其大小比较", "subsection_title": "1.2.4 绝对值",
+      "title": "已知绝对值求原数（双解情形）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["只给出一个解，漏掉相反数解"]
+    },
+    {
+      "id": "g7.math.a01.02.05", "chapter_code": "a01", "section_code": "02",
+      "section_title": "1.2 有理数及其大小比较", "subsection_title": "1.2.5 有理数的大小比较",
+      "title": "两个负数比较大小",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["绝对值大的负数被误判为更大"]
+    },
+
+    {
+      "id": "g7.math.a02.01.01", "chapter_code": "a02", "section_code": "01",
+      "section_title": "2.1 有理数的加法与减法", "subsection_title": "2.1.1 有理数的加法",
+      "title": "有理数加法法则（同号与异号相加）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["异号相加时结果的符号取错", "异号相加用两绝对值相加而非相减"]
+    },
+    {
+      "id": "g7.math.a02.01.02", "chapter_code": "a02", "section_code": "01",
+      "section_title": "2.1 有理数的加法与减法", "subsection_title": "2.1.2 有理数的减法",
+      "title": "有理数减法法则（减法转加法）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["只改变减数符号而未把减号改为加号", "a-b 误算为 b-a"]
+    },
+    {
+      "id": "g7.math.a02.01.03", "chapter_code": "a02", "section_code": "01",
+      "section_title": "2.1 有理数的加法与减法", "subsection_title": "2.1.2 有理数的减法",
+      "title": "加减混合运算统一为省略括号的和",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["省略括号后某一项的符号丢失", "把 -5 读作减 5 而丢失该项符号"]
+    },
+    {
+      "id": "g7.math.a02.02.01", "chapter_code": "a02", "section_code": "02",
+      "section_title": "2.2 有理数的乘法与除法", "subsection_title": "2.2.1 有理数的乘法",
+      "title": "有理数乘法法则与符号确定（含与 0 相乘）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["多个因数相乘时负号个数与结果符号对应错误", "把 0 当作其它数的相反数处理"]
+    },
+    {
+      "id": "g7.math.a02.02.02", "chapter_code": "a02", "section_code": "02",
+      "section_title": "2.2 有理数的乘法与除法", "subsection_title": "2.2.1 有理数的乘法",
+      "title": "乘法分配律（每一项都要乘）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["只对括号内首项分配", "分配时符号连同括号一起漏掉"]
+    },
+    {
+      "id": "g7.math.a02.02.03", "chapter_code": "a02", "section_code": "02",
+      "section_title": "2.2 有理数的乘法与除法", "subsection_title": "2.2.2 有理数的除法",
+      "title": "有理数除法法则与倒数",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["除以一个分数误乘其分子", "把除数为 0 的情形当作结果为 0"]
+    },
+    {
+      "id": "g7.math.a02.02.04", "chapter_code": "a02", "section_code": "02",
+      "section_title": "2.2 有理数的乘法与除法", "subsection_title": "2.2.2 有理数的除法",
+      "title": "乘除混合运算与同级运算顺序",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["同级运算未按从左到右执行", "把 a÷b×c 误算为 a÷(b×c)"]
+    },
+    {
+      "id": "g7.math.a02.03.01", "chapter_code": "a02", "section_code": "03",
+      "section_title": "2.3 有理数的乘方", "subsection_title": "2.3.1 乘方",
+      "title": "幂的底数与符号：(-a)^n 与 -a^n 的区别",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["负号未进括号却当作底数的一部分", "把指数与底数相乘"]
+    },
+    {
+      "id": "g7.math.a02.03.02", "chapter_code": "a02", "section_code": "03",
+      "section_title": "2.3 有理数的乘方", "subsection_title": "2.3.1 乘方",
+      "title": "含乘方的四则混合运算顺序",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["先算乘除后算乘方", "括号内乘方与括号外运算顺序混用"]
+    },
+
+    {
+      "id": "g7.math.a03.01.01", "chapter_code": "a03", "section_code": "01",
+      "section_title": "3.1 列代数式表示数量关系", "subsection_title": null,
+      "title": "依数量关系列代数式",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["把\"比 a 大 2\"与\"a 的 2 倍\"混用", "多步关系（先减后倍）顺序列反"]
+    },
+    {
+      "id": "g7.math.a03.02.01", "chapter_code": "a03", "section_code": "02",
+      "section_title": "3.2 代数式的值", "subsection_title": null,
+      "title": "代入求值（负数代入必须加括号）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["负数代入含乘方的式子时漏括号导致符号错"]
+    },
+
+    {
+      "id": "g7.math.a04.01.01", "chapter_code": "a04", "section_code": "01",
+      "section_title": "4.1 整式", "subsection_title": null,
+      "title": "多项式的项、次数与常数项",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["识别项时丢失前面的负号", "把最高次项的系数当常数项"]
+    },
+    {
+      "id": "g7.math.a04.02.01", "chapter_code": "a04", "section_code": "02",
+      "section_title": "4.2 整式的加法与减法", "subsection_title": null,
+      "title": "同类项的判定",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["只看字母相同不看指数相同", "把 2ab 与 2a²b 判为同类项"]
+    },
+    {
+      "id": "g7.math.a04.02.02", "chapter_code": "a04", "section_code": "02",
+      "section_title": "4.2 整式的加法与减法", "subsection_title": null,
+      "title": "合并同类项法则",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["系数相加时把指数也相加", "系数带负号时漏掉负号"]
+    },
+    {
+      "id": "g7.math.a04.02.03", "chapter_code": "a04", "section_code": "02",
+      "section_title": "4.2 整式的加法与减法", "subsection_title": null,
+      "title": "去括号（括号前为正号）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["去括号后遗漏括号内的某一项"]
+    },
+    {
+      "id": "g7.math.a04.02.04", "chapter_code": "a04", "section_code": "02",
+      "section_title": "4.2 整式的加法与减法", "subsection_title": null,
+      "title": "去括号（括号前为负号，逐项变号）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["只对首项变号", "常数项漏变号"]
+    },
+
+    {
+      "id": "g7.math.a05.02.01", "chapter_code": "a05", "section_code": "02",
+      "section_title": "5.2 解一元一次方程", "subsection_title": null,
+      "title": "移项与变号",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["移项不变号", "未移动的项被误变号"]
+    },
+    {
+      "id": "g7.math.a05.02.02", "chapter_code": "a05", "section_code": "02",
+      "section_title": "5.2 解一元一次方程", "subsection_title": null,
+      "title": "合并同类项与系数化为 1",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["系数化为 1 时两边同乘而非同除", "分数系数倒数求错"]
+    },
+    {
+      "id": "g7.math.a05.02.03", "chapter_code": "a05", "section_code": "02",
+      "section_title": "5.2 解一元一次方程", "subsection_title": null,
+      "title": "解一元一次方程中的去括号",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["括号前为负号时漏分配给部分项"]
+    },
+    {
+      "id": "g7.math.a05.02.04", "chapter_code": "a05", "section_code": "02",
+      "section_title": "5.2 解一元一次方程", "subsection_title": null,
+      "title": "去分母（各项同乘最小公倍数）",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["不含分母的项漏乘", "最小公倍数求错导致仍需约分"]
+    },
+    {
+      "id": "g7.math.a05.02.05", "chapter_code": "a05", "section_code": "02",
+      "section_title": "5.2 解一元一次方程", "subsection_title": null,
+      "title": "解一元一次方程的一般步骤与顺序选择",
+      "origin": "inferred", "review_status": "pending_review", "reviewed_by": null, "reviewed_at": null,
+      "deprecated": false, "deprecated_at": null, "deprecated_reason": null, "replacement_ids": [],
+      "source_pages": null,
+      "expected_error_patterns": ["步骤顺序不当导致符号链式错误", "跳步后自我抄错"]
+    }
+  ]
+}
